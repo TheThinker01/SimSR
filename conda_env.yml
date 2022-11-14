@@ -2,18 +2,20 @@ name: simsr
 channels:
   - defaults
 dependencies:
-  - pytorch
-  - torchvision
+  - python=3.7
   - cudatoolkit=9.2
   - absl-py
   - pyparsing
   - pillow=6.1
   - pip:
     - termcolor
-    - git+git://github.com/deepmind/dm_control.git
-    - git+git://github.com/1nadequacy/dmc2gym.git
+    - torch==1.10.2
+    - torchvision==0.11.3
+    - gym==0.25.2
+    - git+https://github.com/deepmind/dm_control.git
+    - git+https://github.com/1nadequacy/dmc2gym.git
     - tb-nightly
     - imageio
     - imageio-ffmpeg
-    - torchvision
     - scikit-image
+    - setuptools==59.5.0

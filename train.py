@@ -113,10 +113,11 @@ def evaluate(env, agent, video, num_episodes, L, step, args):
         best_ep_reward = np.max(all_ep_rewards)
         L.log('eval/' + prefix + 'mean_episode_reward', mean_ep_reward, step)
         L.log('eval/' + prefix + 'best_episode_reward', best_ep_reward, step)
+        return mean_ep_reward
 
-    run_eval_loop(sample_stochastically=False)
+    mean_ep_reward = run_eval_loop(sample_stochastically=False)
     L.dump(step)
-
+    return mean_ep_reward
 
 def make_agent(obs_shape, action_shape, args, device):
     if args.agent == 'simsr_sac':
@@ -229,15 +230,17 @@ def main():
 
     episode, episode_reward, done = 0, 0, True
     start_time = time.time()
-
+    best_mean_reward = 0
     for step in range(args.num_train_steps):
         # evaluate agent periodically
 
         if step % args.eval_freq == 0:
             L.log('eval/episode', episode, step)
-            evaluate(env, agent, video, args.num_eval_episodes, L, step, args)
-            if args.save_model:
-                agent.save_smart(model_dir, step)
+            mean_reward = evaluate(env, agent, video, args.num_eval_episodes, L, step, args)
+            if args.save_model and mean_reward>=best_mean_reward:
+                agent.save(model_dir, step)
+                agent.save_SimSR(model_dir, step)
+                best_mean_reward = mean_reward
             if args.save_buffer:
                 replay_buffer.save(buffer_dir)
 
