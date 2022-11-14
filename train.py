@@ -74,7 +74,8 @@ def parse_args():
     parser.add_argument('--save_video', default=False, action='store_true')
     parser.add_argument('--save_model', default=False, action='store_true')
     parser.add_argument('--detach_encoder', default=False, action='store_true')
-
+    parser.add_argument('--load_model', default=False, action='store_true')
+    parser.add_argument('--load_at_step', default=0, type=int)
     parser.add_argument('--log_interval', default=100, type=int)
     args = parser.parse_args()
     return args
@@ -225,13 +226,15 @@ def main():
         args=args,
         device=device
     )
-
+    if args.load_model:
+        agent.load(model_dir, args.load_at_step)
+        agent.load_SimSR(model_dir, args.load_at_step)
     L = Logger(args.work_dir, use_tb=args.save_tb)
 
     episode, episode_reward, done = 0, 0, True
     start_time = time.time()
     best_mean_reward = 0
-    for step in range(args.num_train_steps):
+    for step in range(args.load_at_step+1, args.num_train_steps):
         # evaluate agent periodically
 
         if step % args.eval_freq == 0:
@@ -262,14 +265,14 @@ def main():
                 L.log('train/episode', episode, step)
 
         # sample action for data collection
-        if step < args.init_steps:
+        if (step-args.load_at_step) < args.init_steps:
             action = env.action_space.sample()
         else:
             with utils.eval_mode(agent):
                 action = agent.sample_action(obs)
 
         # run training update
-        if step >= args.init_steps:
+        if  (step-args.load_at_step) >= args.init_steps:
             num_updates = 1
             for _ in range(num_updates):
                 agent.update(replay_buffer, L, step)
